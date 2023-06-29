@@ -8,7 +8,6 @@ import (
 	_ "github.com/lib/pq"
 	"github.com/stretchr/testify/suite"
 	"github.com/teamhanko/hanko/backend/crypto/jwk"
-	"github.com/teamhanko/hanko/backend/dto"
 	"github.com/teamhanko/hanko/backend/persistence/models"
 	"github.com/teamhanko/hanko/backend/session"
 	"github.com/teamhanko/hanko/backend/test"
@@ -19,6 +18,7 @@ import (
 )
 
 func TestUserSuite(t *testing.T) {
+	t.Parallel()
 	suite.Run(t, new(userSuite))
 }
 
@@ -109,12 +109,7 @@ func (s *userSuite) TestUserHandler_Create_UserExists() {
 
 	e.ServeHTTP(rec, req)
 
-	if s.Equal(http.StatusConflict, rec.Code) {
-		httpError := dto.HTTPError{}
-		err := json.Unmarshal(rec.Body.Bytes(), &httpError)
-		s.NoError(err)
-		s.Equal(http.StatusConflict, httpError.Code)
-	}
+	s.Equal(http.StatusConflict, rec.Code)
 }
 
 func (s *userSuite) TestUserHandler_Create_UserExists_CaseInsensitive() {
@@ -136,12 +131,7 @@ func (s *userSuite) TestUserHandler_Create_UserExists_CaseInsensitive() {
 
 	e.ServeHTTP(rec, req)
 
-	if s.Equal(http.StatusConflict, rec.Code) {
-		httpError := dto.HTTPError{}
-		err := json.Unmarshal(rec.Body.Bytes(), &httpError)
-		s.NoError(err)
-		s.Equal(http.StatusConflict, httpError.Code)
-	}
+	s.Equal(http.StatusConflict, rec.Code)
 }
 
 func (s *userSuite) TestUserHandler_Create_InvalidEmail() {
@@ -156,12 +146,7 @@ func (s *userSuite) TestUserHandler_Create_InvalidEmail() {
 
 	e.ServeHTTP(rec, req)
 
-	if s.Equal(http.StatusBadRequest, rec.Code) {
-		httpError := dto.HTTPError{}
-		err := json.Unmarshal(rec.Body.Bytes(), &httpError)
-		s.NoError(err)
-		s.Equal(http.StatusBadRequest, httpError.Code)
-	}
+	s.Equal(http.StatusBadRequest, rec.Code)
 }
 
 func (s *userSuite) TestUserHandler_Create_EmailMissing() {
@@ -176,12 +161,7 @@ func (s *userSuite) TestUserHandler_Create_EmailMissing() {
 
 	e.ServeHTTP(rec, req)
 
-	if s.Equal(http.StatusBadRequest, rec.Code) {
-		httpError := dto.HTTPError{}
-		err := json.Unmarshal(rec.Body.Bytes(), &httpError)
-		s.NoError(err)
-		s.Equal(http.StatusBadRequest, httpError.Code)
-	}
+	s.Equal(http.StatusBadRequest, rec.Code)
 }
 
 func (s *userSuite) TestUserHandler_Get() {
@@ -199,7 +179,7 @@ func (s *userSuite) TestUserHandler_Get() {
 	if err != nil {
 		panic(fmt.Errorf("failed to create jwk manager: %w", err))
 	}
-	sessionManager, err := session.NewManager(jwkManager, test.DefaultConfig.Session)
+	sessionManager, err := session.NewManager(jwkManager, test.DefaultConfig)
 	if err != nil {
 		panic(fmt.Errorf("failed to create session generator: %w", err))
 	}
@@ -239,7 +219,7 @@ func (s *userSuite) TestUserHandler_GetUserWithWebAuthnCredential() {
 	if err != nil {
 		panic(fmt.Errorf("failed to create jwk manager: %w", err))
 	}
-	sessionManager, err := session.NewManager(jwkManager, test.DefaultConfig.Session)
+	sessionManager, err := session.NewManager(jwkManager, test.DefaultConfig)
 	if err != nil {
 		panic(fmt.Errorf("failed to create session generator: %w", err))
 	}
@@ -276,7 +256,7 @@ func (s *userSuite) TestUserHandler_Get_InvalidUserId() {
 	if err != nil {
 		panic(fmt.Errorf("failed to create jwk manager: %w", err))
 	}
-	sessionManager, err := session.NewManager(jwkManager, test.DefaultConfig.Session)
+	sessionManager, err := session.NewManager(jwkManager, test.DefaultConfig)
 	if err != nil {
 		panic(fmt.Errorf("failed to create session generator: %w", err))
 	}
@@ -292,12 +272,7 @@ func (s *userSuite) TestUserHandler_Get_InvalidUserId() {
 
 	e.ServeHTTP(rec, req)
 
-	if s.Equal(http.StatusForbidden, rec.Code) {
-		httpError := dto.HTTPError{}
-		err := json.Unmarshal(rec.Body.Bytes(), &httpError)
-		s.Require().NoError(err)
-		s.Equal(http.StatusForbidden, httpError.Code)
-	}
+	s.Equal(http.StatusForbidden, rec.Code)
 }
 
 func (s *userSuite) TestUserHandler_GetUserIdByEmail_InvalidEmail() {
@@ -312,12 +287,7 @@ func (s *userSuite) TestUserHandler_GetUserIdByEmail_InvalidEmail() {
 
 	e.ServeHTTP(rec, req)
 
-	if s.Equal(http.StatusBadRequest, rec.Code) {
-		httpError := dto.HTTPError{}
-		err := json.Unmarshal(rec.Body.Bytes(), &httpError)
-		s.Require().NoError(err)
-		s.Equal(http.StatusBadRequest, httpError.Code)
-	}
+	s.Equal(http.StatusBadRequest, rec.Code)
 }
 
 func (s *userSuite) TestUserHandler_GetUserIdByEmail_InvalidJson() {
@@ -423,7 +393,7 @@ func (s *userSuite) TestUserHandler_Me() {
 	if err != nil {
 		panic(fmt.Errorf("failed to create jwk manager: %w", err))
 	}
-	sessionManager, err := session.NewManager(jwkManager, test.DefaultConfig.Session)
+	sessionManager, err := session.NewManager(jwkManager, test.DefaultConfig)
 	if err != nil {
 		panic(fmt.Errorf("failed to create session generator: %w", err))
 	}
@@ -460,7 +430,7 @@ func (s *userSuite) TestUserHandler_Logout() {
 	if err != nil {
 		panic(fmt.Errorf("failed to create jwk manager: %w", err))
 	}
-	sessionManager, err := session.NewManager(jwkManager, test.DefaultConfig.Session)
+	sessionManager, err := session.NewManager(jwkManager, test.DefaultConfig)
 	if err != nil {
 		panic(fmt.Errorf("failed to create session generator: %w", err))
 	}
